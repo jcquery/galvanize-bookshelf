@@ -16,13 +16,14 @@ router.get('/books', (_req, res, next) => {
 });
 
 router.get('/books/:id', (req, res, next) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    return next();
+  }
   knex('books')
-    .where('id', req.params.id)
+    .where('id', id)
     .first()
     .then((book) => {
-      if (!book) {
-        return next();
-      }
       res.send(book);
     })
     .catch((err) => {
@@ -30,7 +31,17 @@ router.get('/books/:id', (req, res, next) => {
     });
 });
 
+// if (not attribute or attribute.trim === "")
+// status: 400, content type: plain text, send: specific error message
+// check if the author exists, first check with isnan
+// make request to check authors table
+// newbook = req.body
+
 router.post('/books', (req, res, next) => {
+  const newBook = req.body;
+  if (!newBook.title || newBook.title.trim() === "") {
+    res.status = 400;
+  }
   knex('books')
     .insert(req.body, '*')
     .then((results) => {
@@ -41,14 +52,19 @@ router.post('/books', (req, res, next) => {
     });
 });
 
+// req.body = bookChanges
+// if (attribute) then change attribute
+// vaildate authorid
+
 router.patch('/books/:id', (req, res, next) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    return next();
+  }
   knex('books')
     .update(req.body, '*')
-    .where('id', req.params.id)
+    .where('id', id)
     .then((results) => {
-      if (results.length === 0) {
-        return next();
-      }
       res.send(results[0]);
     })
     .catch((err) => {
@@ -57,6 +73,11 @@ router.patch('/books/:id', (req, res, next) => {
 });
 
 router.delete('/books/:id', (req, res, next) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    return next();
+  }
+
   knex('books')
     .where('id', req.params.id)
     .first()
