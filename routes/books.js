@@ -41,7 +41,31 @@ router.post('/books', (req, res, next) => {
   const newBook = req.body;
   if (!newBook.title || newBook.title.trim() === "") {
     res.status = 400;
+    res.set('Content-Type', 'text/plain');
+    return res.send('Missing book title')
   }
+  if (!newBook.genre || newBook.genre.trim() === "") {
+    res.status = 400;
+    res.set('Content-Type', 'text/plain');
+    return res.send('Missing book genre')
+  }
+  if (!newBook.description || newBook.description.trim() === "") {
+    res.status = 400;
+    res.set('Content-Type', 'text/plain');
+    return res.send('Missing book description')
+  }
+  if (!newBook.cover_url || newBook.cover_url.trim() === "") {
+    res.status = 400;
+    res.set('Content-Type', 'text/plain');
+    return res.send('Missing book cover URL')
+  }
+  if (isNaN(newBook.author_id)){
+    res.status = 400;
+    res.set('Content-Type', 'text/plain');
+    return res.send('Improper author id')
+  }
+
+
   knex('books')
     .insert(req.body, '*')
     .then((results) => {
