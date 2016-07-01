@@ -37,7 +37,7 @@ router.post('/session', (req, res, next) => {
         if (!isMatch) {
           return res.sendStatus(401);
         }
-
+        console.log(user.id);
         req.session.userId = user.id;
         res.cookie('loggedIn', true);
         return res.sendStatus(200);
