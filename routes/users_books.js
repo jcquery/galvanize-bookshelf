@@ -5,7 +5,7 @@ const router = express.Router();
 const knex = require('../knex');
 
 const checkAuth = function(req, res, next) {
-  if (!req.session.user) {
+  if (!req.session.userId) {
     return res.sendStatus(401);
   }
 
@@ -15,13 +15,13 @@ const checkAuth = function(req, res, next) {
 router.get('/users/books', checkAuth, (req, res, next) => {
   knex('users_books')
     .innerJoin('books', 'books.id', 'users_books.book_id')
-    .where('users_books.user_id', req.session.user.id)
+    .where('users_books.user_id', req.session.userId)
     .then((books) => {
       if (books.length === 0) {
         return res
-        .status(404)
-        .set('Content-Type', 'text/plain')
-        .send("You haven't saved any books.");
+          .status(404)
+          .set('Content-Type', 'text/plain')
+          .send("You haven't saved any books.");
       }
       res.send(books);
     })
@@ -32,7 +32,7 @@ router.get('/users/books', checkAuth, (req, res, next) => {
 
 router.get('/users/books/:id', checkAuth, (req, res, next) => {
   const bookId = parseInt(req.params.id);
-  const userId = req.session.user.id;
+  const userId = req.session.userId;
   knex('users_books')
     .innerJoin('books', 'books.id', 'users_books.book_id')
     .where({
@@ -43,9 +43,9 @@ router.get('/users/books/:id', checkAuth, (req, res, next) => {
     .then((book) => {
       if (!book) {
         return res
-        .status(404)
-        .set('Content-Type', 'text/plain')
-        .send("You haven't saved that books.");
+          .status(404)
+          .set('Content-Type', 'text/plain')
+          .send("You haven't saved that book.");
       }
       res.send(book);
     })
@@ -56,7 +56,7 @@ router.get('/users/books/:id', checkAuth, (req, res, next) => {
 
 router.post('/users/books/:id', checkAuth, (req, res, next) => {
   const bookId = parseInt(req.params.id);
-  const userId = req.session.user.id;
+  const userId = req.session.userId;
 
   knex('books')
     .where('id', bookId)
@@ -64,11 +64,11 @@ router.post('/users/books/:id', checkAuth, (req, res, next) => {
     .then((book) => {
       if (!book) {
         return res
-        .status(400)
-        .set('Content-Type', 'text/plain')
-        .send('Invalid book ID');
+          .status(400)
+          .set('Content-Type', 'text/plain')
+          .send('Invalid book ID');
       }
-      knex('users_books')
+      return knex('users_books')
         .insert({
           user_id: userId,
           book_id: bookId
@@ -87,12 +87,16 @@ router.post('/users/books/:id', checkAuth, (req, res, next) => {
 
 router.delete('/users/books/:id', checkAuth, (req, res, next) => {
   const bookId = parseInt(req.params.id);
-  const userId = req.session.user.id;
+  const userId = req.session.userId;
+
+  if (isNaN(bookId)) {
+    return next();
+  }
 
   knex('users_books')
     .where({
-      'users_books.user_id': userId,
-      'users_books.book_id': bookId
+      'user_id': userId,
+      'book_id': bookId
     })
     .first()
     .then((book) => {
@@ -100,18 +104,19 @@ router.delete('/users/books/:id', checkAuth, (req, res, next) => {
         return res
         .status(404)
         .set('Content-Type', 'text/plain')
-        .send("You haven't saved that books.");
+        .send("You haven't saved that book.");
       }
+
       return knex('users_books')
-      .where({
-        'users_books.user_id': userId,
-        'users_books.book_id': bookId
-      })
-      .del()
-      .then((books) => {
-        delete book.id;
-        return res.send(book);
-      })
+        .where({
+          'users_books.user_id': userId,
+          'users_books.book_id': bookId
+        })
+        .del()
+        .then((books) => {
+          delete book.id;
+          return res.send(book);
+        })
     })
     .catch((err) => {
       return next(err);
