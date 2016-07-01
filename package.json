@@ -5,7 +5,7 @@
   "scripts": {
     "test": "mocha",
     "knex": "knex",
-    "heroku-postbuild": "knex migrate:latest; openssl rand -hex 64 | ruby -ne 'puts 'SESSION_SECRET=' + $_' > .env"
+    "heroku-postbuild": "knex migrate:latest"
   },
   "license": "MIT",
   "dependencies": {
