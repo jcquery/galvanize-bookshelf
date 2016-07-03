@@ -17,12 +17,6 @@ router.get('/users/books', checkAuth, (req, res, next) => {
     .innerJoin('books', 'books.id', 'users_books.book_id')
     .where('users_books.user_id', req.session.userId)
     .then((books) => {
-      // if (books.length === 0) {
-      //   return res
-      //     .status(404)
-      //     .set('Content-Type', 'text/plain')
-      //     .send("You haven't saved any books.");
-      // }
       res.send(books);
     })
     .catch((err) => {

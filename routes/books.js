@@ -40,36 +40,54 @@ router.get('/books/:id', (req, res, next) => {
 router.post('/books', (req, res, next) => {
   const newBook = req.body;
   if (!newBook.title || newBook.title.trim() === "") {
-    res.status = 400;
-    res.set('Content-Type', 'text/plain');
-    return res.send('Missing book title')
+    return res
+      .status = 400
+      .set('Content-Type', 'text/plain')
+      .send('Missing book title');
   }
   if (!newBook.genre || newBook.genre.trim() === "") {
-    res.status = 400;
-    res.set('Content-Type', 'text/plain');
-    return res.send('Missing book genre')
+    return res
+      .status = 400
+      .set('Content-Type', 'text/plain')
+      .send('Missing book genre');
   }
   if (!newBook.description || newBook.description.trim() === "") {
-    res.status = 400;
-    res.set('Content-Type', 'text/plain');
-    return res.send('Missing book description')
+    return res
+      .status = 400
+      .set('Content-Type', 'text/plain')
+      .send('Missing book description');
   }
   if (!newBook.cover_url || newBook.cover_url.trim() === "") {
-    res.status = 400;
-    res.set('Content-Type', 'text/plain');
-    return res.send('Missing book cover URL')
+    return res
+      .status = 400
+      .set('Content-Type', 'text/plain')
+      .send('Missing book cover URL');
   }
   if (isNaN(newBook.author_id)){
-    res.status = 400;
-    res.set('Content-Type', 'text/plain');
-    return res.send('Improper author id')
+    return res
+      .status = 400
+      .set('Content-Type', 'text/plain')
+      .send('Improper author id');
   }
 
-
-  knex('books')
-    .insert(req.body, '*')
-    .then((results) => {
-      res.send(results[0]);
+  knex('authors')
+    .where('id', newBook.author_id)
+    .first()
+    .then((author) => {
+      if (!author) {
+        return res
+          .status = 400
+          .set('Content-Type', 'text/plain')
+          .send('Invalid author id');
+      }
+      return knex('books')
+      .insert(req.body, '*')
+      .then((results) => {
+        res.send(results[0]);
+      })
+      .catch((err) => {
+        next(err);
+      });
     })
     .catch((err) => {
       next(err);
@@ -82,18 +100,53 @@ router.post('/books', (req, res, next) => {
 
 router.patch('/books/:id', (req, res, next) => {
   const id = parseInt(req.params.id);
+  const title = req.body.title;
+  const genre = req.body.genre;
+  const description = req.body.description;
+  const cover_url = req.body.cover_url;
+  let author_id = parseInt(req.body.author_id);
+  let bookEdit = {};
+
   if (isNaN(id)) {
     return next();
   }
+
   knex('books')
-    .update(req.body, '*')
     .where('id', id)
-    .then((results) => {
-      res.send(results[0]);
+    .first()
+    .then((book) => {
+      if (!book) {
+        return next();
+      }
+      bookEdit.title = title || book.title;
+      bookEdit.genre = genre || book.genre;
+      bookEdit.description = description || book.description;
+      bookEdit.cover_url = cover_url || book.cover_url;
+      if (!author_id) {
+        author_id = book.author_id;
+      }
+      return knex('authors')
+        .where('id', author_id)
+        .first()
+        .then((author) => {
+          if (!author) {
+            return next();
+          }
+          bookEdit.author_id = author_id;
+          return knex('books')
+            .update(bookEdit, '*')
+            .where('id', id)
+            .then((results) => {
+              res.send(results[0]);
+            })
+            .catch((err) => {
+              next(err);
+          });
+        })
+        .catch((err) => {
+          next(err);
+        });
     })
-    .catch((err) => {
-      next(err);
-    });
 });
 
 router.delete('/books/:id', (req, res, next) => {
